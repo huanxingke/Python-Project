@@ -53,6 +53,7 @@ else:
 def getQuestions():
     url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/Learning/pages/data/questions.json"
     questions = requests.get(url=url).json()
+    st.write(questions)
     return questions
 
 
