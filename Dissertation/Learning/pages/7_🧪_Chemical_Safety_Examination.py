@@ -53,20 +53,30 @@ else:
 def getQuestions():
     url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/Learning/pages/data/questions.json"
     questions = requests.get(url=url).json()
-    st.write(questions)
     return questions
-
-
-# 组卷
-def MakeATestPaper():
-    pass
 
 
 with st.spinner("正在加载题库..."):
     tiku = getQuestions()
 
-st.markdown("> 【考试说明】本试卷共有40道题目，其中：单选题20×2分/题，不定项选择题10×2分/题，判断题10×2分/题，共计100分。")
-st.button("开始组卷", key="make_a_test_paper", on_click=MakeATestPaper)
-
+st.markdown("> 【考试说明】本试卷共有40道题目，其中：单选题20×2分/题，不定项10×4分/题，判断题10×2分/题，共计100分。")
+if st.button("开始组卷", key="make_a_test_paper"):
+    st.markdown("*一、单项选择题（共40分）*")
+    user_answers = {
+        "单选题": [],
+        "多选题": [],
+        "判断题": []
+    }
+    single_choice_questions = rnd.sample(tiku["单选题"], 20)
+    for single_choice_question_index, single_choice_question in enumerate(single_choice_questions):
+        single_choice_question_content = single_choice_question["question_content"]
+        single_choice_question_select = st.radio(
+            "【第%s题】" % (single_choice_question_index + 1) + single_choice_question_content[0],
+            single_choice_question_content[1:],
+            vertical=True
+        )
+        user_answers["单选题"].append(single_choice_question_select)
+    st.markdown("*二、不定项选择题（共40分）*")
+    st.markdown("*三、判断题（共20分）*")
 
 
