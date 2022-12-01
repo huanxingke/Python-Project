@@ -4,6 +4,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+
+st.markdown("# Starting 🎈")
+st.sidebar.markdown("# Starting 🎈")
+
 # ---------- 1、标题 --------- #
 st.title("My first app")
 
@@ -157,4 +161,5 @@ st.write(my_slow_function(func_slider[0], func_slider[1]))
 # streamlit run main_page.py照常运行。
 # 该main_page.py脚本现在将对应于您应用程序的主页。
 # 您会pages在边栏页面选择器中看到该文件夹中的其他脚本。例如：
-
+# st.markdown("# Main page 🎈")
+# st.sidebar.markdown("# Main page 🎈")
