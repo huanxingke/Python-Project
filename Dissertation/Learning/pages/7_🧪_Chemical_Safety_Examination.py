@@ -6,6 +6,7 @@ import matplotlib as mpl
 import streamlit as st
 import random as rnd
 import numpy as np
+import requests
 
 
 # 使 matplotlib 支持中文
@@ -48,8 +49,11 @@ else:
 
 # -------------------- 试卷开始 -------------------- #
 # 获取题库
+@st.cache
 def getQuestions():
-    pass
+    url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/Learning/pages/data/questions.json"
+    questions = requests.get(url=url).json()
+    return questions
 
 
 # 组卷
@@ -58,8 +62,8 @@ def MakeATestPaper():
 
 
 with st.spinner("正在加载题库..."):
-    with open("questions.json", "r", encoding="utf-8") as fp:
-        questions = json.load(fp)
+    tiku = getQuestions()
+
 st.markdown("> 【考试说明】本试卷共有40道题目，其中：单选题20×2分/题，不定项选择题10×2分/题，判断题10×2分/题，共计100分。")
 st.button("开始组卷", key="make_a_test_paper", on_click=MakeATestPaper)
 
