@@ -222,12 +222,12 @@ def correctingTestPaper():
         # 开始生成图表
         # 得分饼图
         score_fig_data = plot_pie(
-            projects=projects,
+            projects=["Single", "Multiple", "Judgmental"],
             counts=lost_scores,
-            title="题型失分情况（总得分：%s 分）" % sum(scores)
+            title="Score Loss of Each Question Type\n[Total score: %s points]" % sum(scores)
         )
         # 绘制
-        st.image(score_fig_data, width=350)
+        st.image(score_fig_data, width=390)
         # 文字评估
         st.markdown("#### 本次考试答对率为: {:.2f} %".format(correct_rate))
         st.markdown("#### 失分最多的题型为: {}".format(most_lost_projects))
