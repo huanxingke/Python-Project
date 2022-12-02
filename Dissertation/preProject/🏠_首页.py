@@ -6,7 +6,7 @@ import streamlit as st
 st.set_page_config(page_title="首页", page_icon="🏠")
 # 页面标题
 header = st.header("🏠 首页")
-username = st.session_state.user_config.get("username") if st.session_state.get("user_config") else None
+username = st.session_state.get("username")
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")
 # 分割线

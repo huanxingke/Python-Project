@@ -23,7 +23,7 @@ if not st.session_state.get("analyse_config"):
     st.session_state.analyse_config = {}
 # 页面标题
 header = st.header("历次测评结果")
-username = st.session_state.user_config.get("username") if st.session_state.get("user_config") else None
+username = st.session_state.get("username")
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")
 # 分割线
@@ -112,11 +112,11 @@ def correctingTestPaper():
                     horizontal=False, disabled=True
                 )
                 # 判断对错
-                st.info("正确答案：{}".format(single_choice_question_answer))
                 if single_choice_question_user_answer == single_choice_question_answer:
-                    st.success("您的答案：{}".format(single_choice_question_user_answer))
+                    st.success("正确答案：{}".format(single_choice_question_user_answer))
                     scores[0] += 2
                 else:
+                    st.info("正确答案：{}".format(single_choice_question_answer))
                     st.error("您的答案：{}".format(single_choice_question_user_answer))
                     mistakes[0] += "".join(single_choice_question_content)
         # 不定项部分
@@ -135,11 +135,11 @@ def correctingTestPaper():
                     disabled=True
                 )
                 # 判断对错
-                st.info("正确答案：{}".format(multi_choice_question_answer))
                 if multi_choice_question_user_answer == multi_choice_question_answer:
-                    st.success("您的答案：{}".format(multi_choice_question_user_answer))
+                    st.success("正确答案：{}".format(multi_choice_question_user_answer))
                     scores[1] += 4
                 else:
+                    st.info("正确答案：{}".format(multi_choice_question_answer))
                     st.error("您的答案：{}".format(multi_choice_question_user_answer))
                     mistakes[1] += "".join(multi_choice_question_content)
         # 判断题部分
@@ -158,11 +158,11 @@ def correctingTestPaper():
                     horizontal=False, disabled=True
                 )
                 # 判断对错
-                st.info("正确答案：{}".format(judgmental_question_answer))
                 if judgmental_question_user_answer == judgmental_question_answer:
-                    st.success("您的答案：{}".format(judgmental_question_user_answer))
+                    st.success("正确答案：{}".format(judgmental_question_user_answer))
                     scores[2] += 2
                 else:
+                    st.info("正确答案：{}".format(judgmental_question_answer))
                     st.error("您的答案：{}".format(judgmental_question_user_answer))
                     mistakes[2] += "".join(judgmental_question_content)
         # 更改提示
