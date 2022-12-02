@@ -2,12 +2,16 @@ import random as rnd
 import string
 import json
 import time
+import io
 
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import streamlit as st
+from PIL import Image
 import numpy as np
 import requests
+import jieba
 
 
 # 使 matplotlib 支持中文
@@ -97,14 +101,78 @@ def makeATestPaper():
                 correctingTestPaper()
 
 
+# plt 转二进制流
+def fig2BytesIO(fig):
+    canvas = fig.canvas
+    with io.BytesIO() as buffer:
+        canvas.print_png(buffer)
+        data = buffer.getvalue()
+    return data
+
+
+# 饼图数据格式
+def autopct_format(values):
+    def my_format(pct):
+        total = sum(values)
+        val = int(round(pct*total/100.0))
+        return "{v:d}".format(v=val)
+    return my_format
+
+
+# 饼图
+def plot_pie(projects, counts, title):
+    fig = plt.figure(figsize=(4, 4))
+    plt.pie(counts, labels=projects, autopct=autopct_format(counts), counterclock=False, startangle=90)
+    plt.title(title)
+    plt.tight_layout()
+    data = fig2BytesIO(fig=fig)
+    return data
+
+
+def drawWordcloud(text, filepath, add_stop_words):
+    """生成词云图
+
+    :param str text: 文本
+    :param str filepath: 图片保存路径
+    :param list add_stop_words: 额外的停用词
+    """
+    # 图片模板
+    wordcloud_png = np.array(Image.open("./data/wordcloud.jpg"))
+    # 分词后空格拼接
+    text = " ".join(jieba.lcut(text))
+    stop_words = set(STOPWORDS)
+    with open("./data/stopwords.txt", encoding="gbk") as fp:
+        for stop_word in fp.readlines():
+            stop_words.add(stop_word.replace("\n", ""))
+    for stop_word in add_stop_words:
+        stop_words.add(stop_word)
+    # 设置词云参数
+    wordcloud = WordCloud(
+        height=400,
+        background_color="white",
+        mask=wordcloud_png,
+        stopwords=stop_words,
+        min_font_size=10
+    )
+    # 生成词云图
+    wordcloud.generate(text)
+    # 保存至文件
+    wordcloud.to_file(filepath)
+
+
 # 批改试卷
 def correctingTestPaper():
     rnd.seed(rnd_seed)
+    # 获取已做的答案
+    answers = st.session_state.exam_config.get("answers")
     # 检索答案序号
     answer_index = lambda x: list(string.ascii_uppercase).index(x.upper())
+    # 各部分得分
+    scores = [0, 0, 0]
+    # 错题词云数据
+    mistakes = ["", "", ""]
+    # 评估并显示错题
     with exam_empty_placeholder.container():
-        # 获取已做的答案
-        answers = st.session_state.exam_config.get("answers")
         # 单选部分
         st.markdown("*一、单项选择题（共40分）*")
         single_choice_questions = rnd.sample(tiku["单选题"], 20)
@@ -123,8 +191,10 @@ def correctingTestPaper():
             st.info("正确答案：{}".format(single_choice_question_answer))
             if single_choice_question_user_answer == single_choice_question_answer:
                 st.success("您的答案：{}".format(single_choice_question_user_answer))
+                scores[0] += 2
             else:
                 st.error("您的答案：{}".format(single_choice_question_user_answer))
+                mistakes[0] += "".join(single_choice_question_content)
         # 不定项部分
         st.markdown("*二、不定项选择题（共40分）*")
         multi_choice_questions = rnd.sample(tiku["多选题"], 10)
@@ -143,8 +213,10 @@ def correctingTestPaper():
             st.info("正确答案：{}".format(multi_choice_question_answer))
             if multi_choice_question_user_answer == multi_choice_question_answer:
                 st.success("您的答案：{}".format(multi_choice_question_user_answer))
+                scores[1] += 4
             else:
                 st.error("您的答案：{}".format(multi_choice_question_user_answer))
+                mistakes[1] += "".join(multi_choice_question_content)
         # 判断题部分
         st.markdown("*三、判断题（共20分）*")
         judgmental_questions = rnd.sample(tiku["判断题"], 10)
@@ -163,14 +235,32 @@ def correctingTestPaper():
             st.info("正确答案：{}".format(judgmental_question_answer))
             if judgmental_question_user_answer == judgmental_question_answer:
                 st.success("您的答案：{}".format(judgmental_question_user_answer))
+                scores[2] += 2
             else:
                 st.error("您的答案：{}".format(judgmental_question_user_answer))
+                mistakes[2] += "".join(judgmental_question_content)
+        # 开始生成图表
+        # 得分饼图
+        score_fig_data = plot_pie(
+            projects=["单选题", "多选题", "判断题"],
+            counts=np.array([40, 40, 20]) - np.array(scores),
+            title="题型失分情况（总得分：%s 分）" % sum(scores)
+        )
+        st.image(score_fig_data, width=350)
+        # 如设置了用户, 则保存本次做题结果
+        if username:
+            if not st.session_state.user_config.get("history"):
+                st.session_state.user_config.history = []
+            st.session_state.user_config.history.append({
+                "rnd_seed": rnd_seed,
+                "user_answer": answers,
+                "scores": sum(scores)
+            })
         # 批改完后重置完成状态
         st.session_state.exam_config["finished"] = False
         st.session_state.exam_config["answers"] = dict()
         # 重做本卷按钮
         re_do_exam = st.button("重做本卷", key="re_do_exam")
-        # 提交后自动批改
         if re_do_exam:
             exam_empty_placeholder.empty()
 
