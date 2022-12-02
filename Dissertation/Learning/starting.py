@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 
 
+# ---------- 0、启动 --------- #
+# streamlit run starting.py
+
 # ---------- 1、st.write() --------- #
 # st.write()是 Streamlit 的“瑞士军刀”。
 # 您几乎可以将任何内容传递给st.write()：文本、数据、Matplotlib 图形、Altair 图表等。
