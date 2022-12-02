@@ -18,11 +18,11 @@ mpl.rcParams["axes.unicode_minus"] = False
 
 # -------------------- 页眉 -------------------- #
 # 页面设置
-st.set_page_config(page_title="📃 化工安全考试", page_icon="📃")
+st.set_page_config(page_title="化工安全考试", page_icon="📃")
 if not st.session_state.get("exam_config"):
     st.session_state.exam_config = {}
 # 页面标题
-header = st.header("化工安全考试")
+header = st.header("📃 化工安全考试")
 username = st.session_state.get("username")
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")

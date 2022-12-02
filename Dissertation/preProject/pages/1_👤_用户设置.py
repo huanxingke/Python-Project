@@ -3,9 +3,9 @@ import streamlit as st
 
 # -------------------- 页眉 -------------------- #
 # 页面设置
-st.set_page_config(page_title="👤 用户设置", page_icon="👤")
+st.set_page_config(page_title="用户设置", page_icon="👤")
 # 页面标题
-header = st.header("用户设置")
+header = st.header("👤 用户设置")
 subheader = st.subheader("当前身份：游客🚶")
 # 分割线
 st.markdown("---")

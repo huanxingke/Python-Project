@@ -18,11 +18,11 @@ mpl.rcParams["axes.unicode_minus"] = False
 
 # -------------------- 页眉 -------------------- #
 # 页面设置
-st.set_page_config(page_title="💯 历次测评结果", page_icon="💯")
+st.set_page_config(page_title="历次测评结果", page_icon="💯")
 if not st.session_state.get("analyse_config"):
     st.session_state.analyse_config = {}
 # 页面标题
-header = st.header("历次测评结果")
+header = st.header("💯 历次测评结果")
 username = st.session_state.get("username")
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")
