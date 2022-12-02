@@ -22,6 +22,9 @@ if not st.session_state.get("exam_config"):
     st.session_state.exam_config = {}
 # 页面标题
 header = st.header("化工安全考试")
+username = st.session_state.user_config.get("username") if st.session_state.get("user_config") else None
+if username:
+    subheader = st.subheader(f"欢迎🎉 {username}")
 # 分割线
 st.markdown("---")
 
@@ -30,7 +33,7 @@ st.markdown("---")
 # 获取题库
 @st.cache
 def getQuestions():
-    tiku_url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/Learning/pages/data/questions.json"
+    tiku_url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/preProject/data/questions.json"
     questions = requests.get(url=tiku_url).json(strict=False)
     return questions
 
