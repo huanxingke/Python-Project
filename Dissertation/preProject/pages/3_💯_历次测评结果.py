@@ -18,11 +18,11 @@ mpl.rcParams["axes.unicode_minus"] = False
 
 # -------------------- 页眉 -------------------- #
 # 页面设置
-st.set_page_config(page_title="📃 化工安全考试", page_icon="📃")
-if not st.session_state.get("exam_config"):
-    st.session_state.exam_config = {}
+st.set_page_config(page_title="💯 历次测评结果", page_icon="💯")
+if not st.session_state.get("analyse_config"):
+    st.session_state.analyse_config = {}
 # 页面标题
-header = st.header("化工安全考试")
+header = st.header("历次测评结果")
 username = st.session_state.user_config.get("username") if st.session_state.get("user_config") else None
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")
@@ -30,7 +30,7 @@ if username:
 st.markdown("---")
 
 
-# -------------------- 试卷开始 -------------------- #
+# -------------------- 评估开始 -------------------- #
 # 获取题库
 @st.cache
 def getQuestions():
@@ -39,67 +39,21 @@ def getQuestions():
     return questions
 
 
-# 重置试卷设置
-def initExamConfig():
-    st.session_state.exam_config["rnd_seed"] = int(time.time())
-    st.session_state.exam_config["finished"] = False
-    st.session_state.exam_config["answers"] = dict()
+# 重置评估设置
+def initAnalyseConfig():
+    st.session_state.analyse_config["expanded_seed"] = None
+    st.session_state.analyse_config["answers"] = dict()
 
 
-# 组卷
-def makeATestPaper():
-    # 设置随机种子
-    rnd.seed(rnd_seed)
-    with exam_empty_placeholder.container():
-        with st.form("exam_paper"):
-            user_answers = {
-                "单选题": [],
-                "多选题": [],
-                "判断题": []
-            }
-            # 单选部分
-            st.markdown("*一、单项选择题（共40分）*")
-            with st.expander("展开单选题"):
-                single_choice_questions = rnd.sample(tiku["单选题"], 20)
-                for single_choice_question_index, single_choice_question in enumerate(single_choice_questions):
-                    single_choice_question_content = single_choice_question["question_content"]
-                    single_choice_question_select = st.radio(
-                        "【第%s题】" % (single_choice_question_index + 1) + single_choice_question_content[0],
-                        single_choice_question_content[1:],
-                        horizontal=False
-                    )
-                    user_answers["单选题"].append(single_choice_question_select[0])
-            # 不定项部分
-            st.markdown("*二、不定项选择题（共40分）*")
-            with st.expander("展开多选题"):
-                multi_choice_questions = rnd.sample(tiku["多选题"], 10)
-                for multi_choice_question_index, multi_choice_question in enumerate(multi_choice_questions):
-                    multi_choice_question_content = multi_choice_question["question_content"]
-                    multi_choice_question_select = st.multiselect(
-                        "【第%s题】" % (multi_choice_question_index + 1) + multi_choice_question_content[0],
-                        multi_choice_question_content[1:]
-                    )
-                    user_answers["多选题"].append([i[0] for i in sorted(multi_choice_question_select, key=lambda x: x[0])])
-            # 判断题部分
-            st.markdown("*三、判断题（共20分）*")
-            with st.expander("展开判断题"):
-                judgmental_questions = rnd.sample(tiku["判断题"], 10)
-                for judgmental_question_index, judgmental_question in enumerate(judgmental_questions):
-                    judgmental_question_content = judgmental_question["question_content"]
-                    judgmental_question_select = st.radio(
-                        "【第%s题】" % (judgmental_question_index + 1) + judgmental_question_content[0],
-                        ["对", "错"],
-                        horizontal=False
-                    )
-                    user_answers["判断题"].append(judgmental_question_select)
-            # 提交按钮
-            submitted = st.form_submit_button("点击提交")
-            # 提交后自动批改
-            if submitted:
-                st.session_state.exam_config["finished"] = True
-                st.session_state.exam_config["answers"] = user_answers
-                exam_empty_placeholder.empty()
-                correctingTestPaper()
+# 删除单条记录
+def deleteSingleHistory(seed_list=None, delete_selected=False):
+    if delete_selected:
+        seed_list = history_selected[:]
+    for seed in seed_list:
+        history_seed = [i["rnd_seed"] for i in st.session_state.history][:]
+        if seed in history_seed:
+            del st.session_state.history[history_seed.index(seed)]
+    initAnalyseConfig()
 
 
 # plt 转二进制流
@@ -133,13 +87,13 @@ def plot_pie(projects, counts, title):
 # 批改试卷
 def correctingTestPaper():
     # 设置随机种子
-    rnd.seed(rnd_seed)
-    # 获取已做的答案
-    answers = st.session_state.exam_config.get("answers")
+    rnd.seed(expanded_seed)
     # 检索答案序号
     answer_index = lambda x: list(string.ascii_uppercase).index(x.upper())
     # 各部分得分
     scores = [0, 0, 0]
+    # 错题词云数据
+    mistakes = ["", "", ""]
     # 评估并显示错题
     with exam_empty_placeholder.container():
         # 单选部分
@@ -164,6 +118,7 @@ def correctingTestPaper():
                     scores[0] += 2
                 else:
                     st.error("您的答案：{}".format(single_choice_question_user_answer))
+                    mistakes[0] += "".join(single_choice_question_content)
         # 不定项部分
         multiple_tip = st.markdown("*二、不定项选择题（共40分）*")
         with st.expander("展开多选题详情"):
@@ -186,6 +141,7 @@ def correctingTestPaper():
                     scores[1] += 4
                 else:
                     st.error("您的答案：{}".format(multi_choice_question_user_answer))
+                    mistakes[1] += "".join(multi_choice_question_content)
         # 判断题部分
         judgmental_tip = st.markdown("*三、判断题（共20分）*")
         with st.expander("展开判断题详情"):
@@ -208,6 +164,7 @@ def correctingTestPaper():
                     scores[2] += 2
                 else:
                     st.error("您的答案：{}".format(judgmental_question_user_answer))
+                    mistakes[2] += "".join(judgmental_question_content)
         # 更改提示
         single_tip.markdown("*一、单项选择题（得分：{}/40）*".format(scores[0]))
         multiple_tip.markdown("*二、不定项选择题（得分：{}/40）*".format(scores[1]))
@@ -237,51 +194,79 @@ def correctingTestPaper():
             st.markdown("### 总评：成绩不错！再接再厉！")
         elif sum(scores) < 60:
             st.markdown("### 总评：化工安全意识有待提高呀！")
-        # 保存本次做题结果
-        if not st.session_state.get("history"):
-            st.session_state.history = []
-        history_rnd_seed = [i["rnd_seed"] for i in st.session_state.history]
-        if rnd_seed not in history_rnd_seed:
-            st.session_state.history.append({
-                "rnd_seed": rnd_seed,
-                "user_answer": answers,
-                "scores": sum(scores)
-            })
-        else:
-            # 或者更新
-            st.session_state.history[history_rnd_seed.index(rnd_seed)] = {
-                "rnd_seed": rnd_seed,
-                "user_answer": answers,
-                "scores": sum(scores)
-            }
-        # 批改完后重置完成状态
-        st.session_state.exam_config["finished"] = False
-        st.session_state.exam_config["answers"] = dict()
-        # 重做本卷按钮
-        re_do_exam = st.button("重做本卷", key="re_do_exam")
-        if re_do_exam:
-            exam_empty_placeholder.empty()
+        # 重置设置
+        initAnalyseConfig()
 
 
-# 加载题库
-with st.spinner("正在加载题库..."):
-    tiku = getQuestions()
-st.markdown("> 【考试说明】本试卷共有40道题目，其中：单选题20×2分/题，不定项10×4分/题，判断题10×2分/题，共计100分。")
-# 获取试卷设置
-rnd_seed = st.session_state.exam_config.get("rnd_seed")
-finished = st.session_state.exam_config.get("finished")
-# 设置组卷随机值
-if not rnd_seed:
-    initExamConfig()
-# 重置试卷设置按钮
-st.button("重新组卷", key="make_a_test_paper", on_click=initExamConfig)
-# 题库随机数显示
-st.write("【题库随机数：%s】" % st.session_state.exam_config.get("rnd_seed"))
-# 如果是新组的卷子或者已经查看过答案的卷子
-# 则进行组卷
-# 初始化容器
-exam_empty_placeholder = st.empty()
-if not finished:
-    makeATestPaper()
+# 设置需要展开的试卷
+def setExpanded(seed, answer):
+    st.session_state.analyse_config["expanded_seed"] = seed
+    st.session_state.analyse_config["answers"] = answer
+
+
+# 获取做题历史
+history = st.session_state.get("history")
+if not history:
+    st.markdown("### 您还没有考试记录哦！")
 else:
-    correctingTestPaper()
+    # 加载题库
+    with st.spinner("正在加载题库..."):
+        tiku = getQuestions()
+    # 选中的历史记录
+    history_selected = []
+    # 表头
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.markdown("#### 题库随机数")
+    with col2:
+        st.markdown("#### 分数")
+    with col3:
+        st.markdown("#### 详情")
+    with col4:
+        st.markdown("#### 删除")
+    with col5:
+        st.button(
+            "删除选中", key="delete_selected",
+            on_click=deleteSingleHistory, kwargs={"delete_selected": True}
+        )
+    # 遍历
+    for single_history in history:
+        history_rnd_seed = single_history["rnd_seed"]
+        history_user_answer = single_history["user_answer"]
+        history_scores = single_history["scores"]
+        col1, col2, col3, col4, col5 = st.columns(5)
+        with col1:
+            st.text(history_rnd_seed)
+        with col2:
+            st.text(history_scores)
+        with col3:
+            st.button(
+                "展开详情", key="expanded_%s" % history_rnd_seed,
+                on_click=setExpanded, kwargs={
+                    "seed": history_rnd_seed,
+                    "answer": history_user_answer
+                }
+            )
+        with col4:
+            st.button(
+                "删除", key="delete_%s" % history_rnd_seed,
+                on_click=deleteSingleHistory, kwargs={
+                    "seed_list": [history_rnd_seed]
+                }
+            )
+        with col5:
+            selected = st.checkbox("选中", key="select_%s" % history_rnd_seed)
+            if selected:
+                history_selected.append(history_rnd_seed)
+    # 获取评估设置
+    expanded_seed = st.session_state.analyse_config.get("expanded_seed")
+    answers = st.session_state.analyse_config.get("answers")
+    # 显示评估结果
+    if expanded_seed:
+        # 重置评估设置按钮
+        st.button("关闭详情", key="collapsed_details", on_click=initAnalyseConfig)
+        # 题库随机数显示
+        st.write("【题库随机数：%s】" % expanded_seed)
+        # 初始化容器
+        exam_empty_placeholder = st.empty()
+        correctingTestPaper()

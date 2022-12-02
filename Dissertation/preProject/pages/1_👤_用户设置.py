@@ -3,7 +3,7 @@ import streamlit as st
 
 # -------------------- 页眉 -------------------- #
 # 页面设置
-st.set_page_config(page_title="用户设置", page_icon="👤")
+st.set_page_config(page_title="👤 用户设置", page_icon="👤")
 if not st.session_state.get("user_config"):
     st.session_state.user_config = {}
 # 页面标题
@@ -21,12 +21,14 @@ def setUsername():
 
 username = st.session_state.user_config.get("username")
 if not username:
-    username_input = st.text_input("您可以设置临时用户名以保存做题记录:", placeholder="请输入用户名", key="username_input")
+    username_input = st.text_input("您可以设置临时用户名:", placeholder="请输入用户名", key="username_input")
     st.button(
         "确认用户名", key="save_user",
         on_click=setUsername
     )
     st.write("未设置用户名！")
+    if st.session_state.user_config.history:
+        del st.session_state.user_config.history
 else:
     username_input = st.text_input("您可以更改用户名:", placeholder="请输入用户名", key="username_change")
     st.button(

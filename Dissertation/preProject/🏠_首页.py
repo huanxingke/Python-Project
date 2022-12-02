@@ -5,7 +5,7 @@ import streamlit as st
 # 页面设置
 st.set_page_config(page_title="首页", page_icon="🏠")
 # 页面标题
-header = st.header("首页")
+header = st.header("🏠 首页")
 username = st.session_state.user_config.get("username") if st.session_state.get("user_config") else None
 if username:
     subheader = st.subheader(f"欢迎🎉 {username}")
