@@ -212,6 +212,7 @@ else:
     # 加载题库
     with st.spinner("正在加载题库..."):
         tiku = getQuestions()
+    st.write("【刷新网页后将清除历史记录】")
     # 选中的历史记录
     history_selected = []
     # 表头

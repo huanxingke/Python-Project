@@ -19,14 +19,14 @@ def setUsername():
 
 username = st.session_state.get("username")
 if not username:
-    username_input = st.text_input("您可以设置临时用户名:", placeholder="请输入用户名", key="username_input")
+    username_input = st.text_input("您可以设置临时用户名【刷新网页后将不会保存】:", placeholder="请输入用户名", key="username_input")
     st.button(
         "确认用户名", key="save_user",
         on_click=setUsername
     )
     st.write("未设置用户名！")
 else:
-    username_input = st.text_input("您可以更改用户名:", placeholder="请输入用户名", key="username_change")
+    username_input = st.text_input("您可以更改用户名【刷新网页后将不会保存】:", placeholder="请输入用户名", key="username_change")
     st.button(
         "确认更改", key="change_user",
         on_click=setUsername
