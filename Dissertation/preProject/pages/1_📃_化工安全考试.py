@@ -1,4 +1,5 @@
 import random as rnd
+import string
 import json
 import time
 
@@ -20,33 +21,9 @@ st.set_page_config(page_title="化工安全考试", page_icon="📃")
 if not st.session_state.get("exam_config"):
     st.session_state.exam_config = {}
 # 页面标题
-header = st.header("化工安全考试（当前身份🚶 游客）")
+header = st.header("化工安全考试")
 # 分割线
 st.markdown("---")
-
-
-# -------------------- 用户登录侧边栏 -------------------- #
-# 设置用户名
-def setUsername():
-    st.session_state.exam_config["username"] = username_input
-
-
-username = st.session_state.exam_config.get("username")
-if not username:
-    username_input = st.sidebar.text_input("请设置临时用户名以保存做题记录:", placeholder="请输入用户名", key="username_input")
-    st.sidebar.button(
-        "确认用户名", key="save_user",
-        on_click=setUsername
-    )
-    st.sidebar.write("未设置用户名！")
-else:
-    username_input = st.sidebar.text_input("您可以更改用户名:", placeholder="请输入用户名", key="username_change")
-    st.sidebar.button(
-        "确认更改", key="change_user",
-        on_click=setUsername
-    )
-    st.sidebar.write(f"欢迎🎉 {username}")
-    header.header(f"化工安全考试（欢迎🎉 {username}）")
 
 
 # -------------------- 试卷开始 -------------------- #
@@ -54,7 +31,7 @@ else:
 @st.cache
 def getQuestions():
     tiku_url = "https://raw.githubusercontent.com/huanxingke/Python-Project/master/Dissertation/Learning/pages/data/questions.json"
-    questions = requests.get(url=tiku_url).json()
+    questions = requests.get(url=tiku_url).json(strict=False)
     return questions
 
 
@@ -67,6 +44,7 @@ def initConfig():
 
 # 组卷
 def makeATestPaper():
+    rnd.seed(rnd_seed)
     with exam_empty_placeholder.container():
         with st.form("exam_paper"):
             user_answers = {
@@ -118,6 +96,9 @@ def makeATestPaper():
 
 # 批改试卷
 def correctingTestPaper():
+    rnd.seed(rnd_seed)
+    # 检索答案序号
+    answer_index = lambda x: list(string.ascii_uppercase).index(x.upper())
     with exam_empty_placeholder.container():
         # 获取已做的答案
         answers = st.session_state.exam_config.get("answers")
@@ -125,31 +106,62 @@ def correctingTestPaper():
         st.markdown("*一、单项选择题（共40分）*")
         single_choice_questions = rnd.sample(tiku["单选题"], 20)
         for single_choice_question_index, single_choice_question in enumerate(single_choice_questions):
+            # 问题内容、答案、用户答案
             single_choice_question_content = single_choice_question["question_content"]
+            single_choice_question_answer = single_choice_question["answer"][0]
+            single_choice_question_user_answer = answers["单选题"][single_choice_question_index]
             st.radio(
                 "【第%s题】" % (single_choice_question_index + 1) + single_choice_question_content[0],
                 single_choice_question_content[1:],
+                index=answer_index(single_choice_question_user_answer),
                 horizontal=False, disabled=True
             )
+            # 判断对错
+            st.info("正确答案：{}".format(single_choice_question_answer))
+            if single_choice_question_user_answer == single_choice_question_answer:
+                st.success("您的答案：{}".format(single_choice_question_user_answer))
+            else:
+                st.error("您的答案：{}".format(single_choice_question_user_answer))
         # 不定项部分
         st.markdown("*二、不定项选择题（共40分）*")
         multi_choice_questions = rnd.sample(tiku["多选题"], 10)
         for multi_choice_question_index, multi_choice_question in enumerate(multi_choice_questions):
+            # 问题内容、答案、用户答案
             multi_choice_question_content = multi_choice_question["question_content"]
+            multi_choice_question_answer = "".join(sorted(multi_choice_question["answer"]))
+            multi_choice_question_user_answer = "".join(sorted(answers["多选题"][multi_choice_question_index]))
             st.multiselect(
                 "【第%s题】" % (multi_choice_question_index + 1) + multi_choice_question_content[0],
-                multi_choice_question_content[1:], disabled=True
+                multi_choice_question_content[1:],
+                default=multi_choice_question_content[1:],
+                disabled=True
             )
+            # 判断对错
+            st.info("正确答案：{}".format(multi_choice_question_answer))
+            if multi_choice_question_user_answer == multi_choice_question_answer:
+                st.success("您的答案：{}".format(multi_choice_question_user_answer))
+            else:
+                st.error("您的答案：{}".format(multi_choice_question_user_answer))
         # 判断题部分
         st.markdown("*三、判断题（共20分）*")
         judgmental_questions = rnd.sample(tiku["判断题"], 10)
         for judgmental_question_index, judgmental_question in enumerate(judgmental_questions):
+            # 问题内容、答案、用户答案
             judgmental_question_content = judgmental_question["question_content"]
+            judgmental_question_answer = judgmental_question["answer"][0]
+            judgmental_question_user_answer = answers["判断题"][judgmental_question_index]
             st.radio(
                 "【第%s题】" % (judgmental_question_index + 1) + judgmental_question_content[0],
                 ["对", "错"],
+                index=["对", "错"].index(judgmental_question_user_answer),
                 horizontal=False, disabled=True
             )
+            # 判断对错
+            st.info("正确答案：{}".format(judgmental_question_answer))
+            if judgmental_question_user_answer == judgmental_question_answer:
+                st.success("您的答案：{}".format(judgmental_question_user_answer))
+            else:
+                st.error("您的答案：{}".format(judgmental_question_user_answer))
         # 批改完后重置完成状态
         st.session_state.exam_config["finished"] = False
         st.session_state.exam_config["answers"] = dict()
@@ -163,7 +175,6 @@ def correctingTestPaper():
 # 加载题库
 with st.spinner("正在加载题库..."):
     tiku = getQuestions()
-st.write(tiku)
 st.markdown("> 【考试说明】本试卷共有40道题目，其中：单选题20×2分/题，不定项10×4分/题，判断题10×2分/题，共计100分。")
 # 重置试卷设置按钮
 st.button("重新组卷", key="make_a_test_paper", on_click=initConfig)
@@ -171,10 +182,7 @@ st.button("重新组卷", key="make_a_test_paper", on_click=initConfig)
 rnd_seed = st.session_state.exam_config.get("rnd_seed")
 finished = st.session_state.exam_config.get("finished")
 # 设置组卷随机值
-if rnd_seed:
-    rnd.seed(rnd_seed)
-else:
-    # 未设置则先设置
+if not rnd_seed:
     initConfig()
 # 如果是新组的卷子或者已经查看过答案的卷子
 # 则进行组卷
