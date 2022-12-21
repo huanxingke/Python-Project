@@ -83,7 +83,7 @@ option = st.selectbox(
 "You selected: ", option
 
 # ---------- 10、侧边栏 --------- #
-# Streamlit 使用 st.sidebar. 
+# Streamlit 使用 st.sidebar.
 # 传递给的每个元素 st.sidebar都固定在左侧，
 # 使用户可以专注于应用程序中的内容，同时仍然可以访问 UI 控件。
 # Add a selectbox to the sidebar:
