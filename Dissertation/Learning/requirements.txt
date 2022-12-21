@@ -2,3 +2,4 @@ numpy
 pydeck
 pandas
 requests
+streamkies
